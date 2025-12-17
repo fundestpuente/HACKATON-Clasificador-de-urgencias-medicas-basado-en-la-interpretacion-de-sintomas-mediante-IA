@@ -21,6 +21,7 @@ API_URL = "http://127.0.0.1:8000/triaje/agendar"
 
 # --- FUNCIONES AUXILIARES DE TEMPLATES ---
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+ASSETS_DIR = Path(__file__).parent / "assets"
 
 
 def load_template(filename: str) -> str:
@@ -47,7 +48,7 @@ def limpiar_texto():
 # --- CONFIGURACIÓN DE LA PÁGINA ---
 st.set_page_config(
     page_title="TrIAje 593",
-    page_icon="🏥",
+    page_icon="assets/favicon.ico",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -80,7 +81,8 @@ model, le = load_models()
 # --- SIDEBAR (BARRA LATERAL) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3063/3063176.png", width=80)
-    st.title("TrIAje 593")
+    st.image(str(ASSETS_DIR / "logo.png"), width=100)
+    st.title("Bienvenido")
     st.caption("Sistema de Clasificación Médica")
     st.divider()
 
