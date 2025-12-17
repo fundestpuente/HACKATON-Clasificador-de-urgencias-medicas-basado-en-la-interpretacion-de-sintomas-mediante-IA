@@ -1,5 +1,4 @@
 import streamlit as st
-import pandas as pd
 import numpy as np
 import pickle
 import os
@@ -39,6 +38,10 @@ def load_css() -> str:
     if content:
         return f"<style>\n{content}\n</style>"
     return ""
+
+def limpiar_texto():
+    st.session_state.input_text_area = ""
+    st.session_state.texto_completo = ""
 
 
 # --- CONFIGURACIÓN DE LA PÁGINA ---
@@ -114,7 +117,7 @@ if not model:
 col_input, col_help = st.columns([3, 2])
 with col_input:
     # Estado para el texto
-    if 'texto_completo' not in st.session_state:
+    if 'input_text_area' not in st.session_state:
         st.session_state.texto_completo = ""
 
     # Label con micrófono integrado
@@ -131,27 +134,39 @@ with col_input:
             icon_size="2x"
         )
     # Procesar el audio cuando esté disponible
-    if audio_bytes:
-        # Convertir audio a texto usando el módulo de voice_recognition
+    # Inicializar variable para rastrear el último audio procesado
+    if 'ultimo_audio_procesado' not in st.session_state:
+        st.session_state.ultimo_audio_procesado = None
+    # Procesar solo si hay audio Y es diferente al último procesado
+    if audio_bytes and audio_bytes != st.session_state.ultimo_audio_procesado:
+        # Guardamos este audio como procesado para que no se repita en el rerun
+        st.session_state.ultimo_audio_procesado = audio_bytes
+
         with st.spinner("🔄 Transcribiendo audio..."):
             success, texto_transcrito, error_msg = transcribe_audio(audio_bytes)
 
             if success:
-                # Agregar el texto transcrito usando la función del módulo
-                st.session_state.texto_completo = append_text(
-                    st.session_state.texto_completo,
+                # 1. Calculamos el nuevo texto completo
+                nuevo_texto = append_text(
+                    st.session_state.input_text_area,
                     texto_transcrito
                 )
+
+                # 2. Actualizamos la variable de almacenamiento
+                st.session_state.input_text_area = nuevo_texto
+
                 st.success(f"✅ Transcrito correctamente")
+                time.sleep(0.5)
+                st.rerun()
+
             else:
-                # Mostrar el error apropiado
                 if "no se pudo entender" in error_msg.lower():
                     st.warning(f"⚠️ {error_msg}")
                 else:
                     st.error(f"❌ {error_msg}")
+
     texto_input = st.text_area(
         label="Descripción del caso",
-        value=st.session_state.texto_completo,
         placeholder="Ej: Paciente presenta dolor precordial, sudoración fría y dificultad para respirar...",
         height=150,
         key="input_text_area",
@@ -166,22 +181,13 @@ with col_input:
     with col_btn_1:
         analizar_btn = st.button("🔍 Analizar", type="primary", use_container_width=True)
     with col_btn_2:
-        if st.button("🗑️ Limpiar", type="secondary", use_container_width=True):
-            st.session_state.texto_completo = ""
-            st.rerun()
+        st.button("🗑️ Limpiar", type="secondary", use_container_width=True, on_click=limpiar_texto)
 
 with col_help:
     st.markdown("#### ❓ ¿Cómo describir los síntomas?")
     st.markdown("""
-    **✍️ Escribiendo:**
     - Sé lo más detallado posible
     - Incluye duración, intensidad y factores asociados
-
-    **🎤 Dictando por voz:**
-    1. Haz clic en el ícono del micrófono
-    2. Habla claramente describiendo los síntomas
-    3. El audio se detendrá automáticamente
-    4. El texto se transcribirá automáticamente
 
     **Ejemplos:**
     - "Dolor abdominal intenso desde hace 2 horas, náuseas y vómitos"
