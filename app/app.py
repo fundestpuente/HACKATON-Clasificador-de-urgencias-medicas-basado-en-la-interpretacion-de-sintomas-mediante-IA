@@ -80,7 +80,6 @@ model, le = load_models()
 
 # --- SIDEBAR (BARRA LATERAL) ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3063/3063176.png", width=80)
     st.image(str(ASSETS_DIR / "logo.png"), width=100)
     st.title("Bienvenido")
     st.caption("Sistema de Clasificación Médica")
